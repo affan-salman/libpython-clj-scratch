@@ -1,0 +1,57 @@
+A basic libpython-clj project
+
+This will hopefully help reproduce an issue I have observed evaluating
+code with reveal enabled (reveal nREPL middleware) with nREPL 0.8.2,
+Clojure 1.10.2, and Java 14.0.1.
+
+* Steps
+
+1. Connect through nREPL with the reveal middleware enabled.
+
+2. Open src/io/scaleux/libpython_scratch.clj and start evaluating
+   expressions therein.  Please follow the instructions within the
+   =comment= form to reproduce the issue.
+
+3. Specifically, the form =(py/att-type-map test-dict)= results in an
+   Exception with the following cause:
+
+    #+BEGIN_SRC clojure
+    1. Caused by java.lang.ClassCastException
+       class java.lang.String cannot be cast to class clojure.lang.Keyword
+       (java.lang.String is in module java.base of loader 'bootstrap';
+       clojure.lang.Keyword is in unnamed module of loader 'app')
+
+                  Keyword.java:  114  clojure.lang.Keyword/compareTo
+                     Util.java:  153  clojure.lang.Util/compare
+                       RT.java:  283  clojure.lang.RT$DefaultComparator/compare
+        PersistentTreeMap.java:  330  clojure.lang.PersistentTreeMap/doCompare
+        PersistentTreeMap.java:  317  clojure.lang.PersistentTreeMap/entryAt
+        PersistentTreeMap.java:  297  clojure.lang.PersistentTreeMap/valAt
+        PersistentTreeMap.java:  302  clojure.lang.PersistentTreeMap/valAt
+        KeywordLookupSite.java:   45  clojure.lang.KeywordLookupSite$1/get
+                     nrepl.clj:   22  vlaaad.reveal.nrepl/show-output
+                     nrepl.clj:    9  vlaaad.reveal.nrepl/show-output
+                     nrepl.clj:   78  vlaaad.reveal.nrepl/middleware/fn/fn/reify
+        interruptible_eval.clj:  123  nrepl.middleware.interruptible-eval/evaluate/fn
+                      main.clj:  442  clojure.main/repl/read-eval-print
+                      main.clj:  458  clojure.main/repl/fn
+                      main.clj:  458  clojure.main/repl
+                      main.clj:  368  clojure.main/repl
+                   RestFn.java:  137  clojure.lang.RestFn/applyTo
+                      core.clj:  667  clojure.core/apply
+                      core.clj:  662  clojure.core/apply
+                    regrow.clj:   20  refactor-nrepl.ns.slam.hound.regrow/wrap-clojure-repl/fn
+                   RestFn.java: 1523  clojure.lang.RestFn/invoke
+        interruptible_eval.clj:   84  nrepl.middleware.interruptible-eval/evaluate
+        interruptible_eval.clj:   56  nrepl.middleware.interruptible-eval/evaluate
+        interruptible_eval.clj:  152  nrepl.middleware.interruptible-eval/interruptible-eval/fn/fn
+                      AFn.java:   22  clojure.lang.AFn/run
+                   session.clj:  202  nrepl.middleware.session/session-exec/main-loop/fn
+                   session.clj:  201  nrepl.middleware.session/session-exec/main-loop
+                      AFn.java:   22  clojure.lang.AFn/run
+                   Thread.java:  832  java.lang.Thread/run
+    #+END_SRC
+
+4. Running these forms in a new nREPL session *without* the reveal
+   middleware evaluates the last expresssion fine and returns a map
+   instead of raising an Exception.
